@@ -16,6 +16,8 @@ namespace RedisCache.Application.Services
         {
             var db = _redis.GetDatabase();
             var serializedSession = JsonConvert.SerializeObject(session);
+            //var x = DateTime.UtcNow;
+            //x.AddHours(-3);
             DateTime getBrazilTime = TimeZoneInfo.ConvertTime(DateTime.Now, TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time"));
             var expiryTime = session.ExpiresAt - getBrazilTime;
             await db.StringSetAsync(session.SessionId, serializedSession, expiryTime);
@@ -29,6 +31,16 @@ namespace RedisCache.Application.Services
             return serializedSession.IsNullOrEmpty
                 ? null
                 : JsonConvert.DeserializeObject<Session>(serializedSession);
+        }
+
+        public async Task UpdateSessionAsync(string sessionId, Session updatedSession)
+        {
+            var session = await GetSessionAsync(sessionId);
+            if (session != null)
+            {
+                session.Data = updatedSession.Data;
+                await SetSessionAsync(session);
+            }
         }
 
         public async Task DeleteSessionAsync(string sessionId)
